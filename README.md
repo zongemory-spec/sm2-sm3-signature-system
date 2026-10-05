@@ -32,3 +32,7 @@ This is coursework, not a certified cryptographic product or an audited standard
 This is an educational project developed with AI assistance. See [source history](docs/SOURCE_HISTORY.md) for the original records and local version snapshots. Imported commits are not backdated. Follow [CONTRIBUTING](CONTRIBUTING.md) for future changes.
 
 本项目用于课程学习与求职作品展示，开发和本次仓库整理使用了 AI 辅助。可运行代码与验证记录不等于所有代码均由本人独立手写，也不代表生产系统经验。历史说明中的本机路径与旧验收记录仅供追溯。
+
+## Synthetic check
+
+`python -m unittest discover -s tests -v` verifies local sign/verify consistency and tamper rejection with a newly generated disposable key. It is not a standards test vector or GUI test.

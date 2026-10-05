@@ -17,7 +17,7 @@ class Config:
 
     VERSION = "1.0"
 
-    AUTHOR = "XXX"
+    AUTHOR = "Zhifeng Zhuang"
 
     # =====================
     # 目录配置
