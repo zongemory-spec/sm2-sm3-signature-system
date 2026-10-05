@@ -1,92 +1,34 @@
-# 基于SM2/SM3的数字签名与验签系统
+# SM2 / SM3 Signature System
 
-## 项目简介
+A Python desktop coursework project for exploring SM3 hashing and SM2 signing/verification with a Tkinter interface.
 
-本系统基于国家商用密码算法SM2与SM3设计实现，采用Python语言开发，结合Tkinter/ttkbootstrap构建现代化图形界面，实现数字签名、数字验签、文件完整性校验及篡改检测等功能。
+密码学综合课程设计：文本与文件摘要、签名、验签、篡改检测及密钥管理。支持的文件处理流程见源码和原课程说明。
 
-系统支持：
+## Run
 
-* SM2公私钥自动生成
-* 密钥保存与加载
-* SM3摘要计算
-* 文本签名与验签
-* TXT文件签名与验签
-* PDF文件签名与验签
-* DOCX文件签名与验签
-* 篡改检测测试
-* 错误密钥测试
-* 签名导入导出
-* 验签报告导出
-* 日志记录与导出
+Python 3.10+ with Tkinter installed:
 
----
-
-## 项目结构
-
-SM2_SM3_Sign_System
-│
-├── config.py
-├── main.py
-│
-├── crypto
-│
-├── gui
-│
-├── utils
-│
-├── keys
-│
-├── logs
-│
-└── signatures
-
----
-
-## 安装依赖
-
-pip install -r requirements.txt
-
----
-
-## 运行系统
-
+```sh
+python -m venv .venv
+# Activate .venv for your shell.
+python -m pip install -r requirements.txt
 python main.py
+```
 
----
+Generate a new demo key pair in the interface. `keys/`, `logs/`, and `signatures/` are runtime folders and are ignored. No original private key or personal test document is shipped.
 
-## 打包部署
+## What this demonstrates
 
-pyinstaller -F -w -i icon.ico main.py
+Read `crypto/` for SM2/SM3 operations, `utils/` for file/key handling and `gui/` for the workflow. Try signing a synthetic document, verifying it, changing its content, and verifying again.
 
-打包完成后：
+## Limits
 
-dist/main.exe
+This is coursework, not a certified cryptographic product or an audited standards-conformant implementation. The current code signs the encoded digest representation; interoperability with external SM2 protocols requires separate verification. Local key storage is plaintext, so use disposable demo keys only. GUI behavior requires a desktop environment.
 
-即可直接运行。
+[Original coursework documentation](README.legacy.md).
 
----
+## Development and provenance
 
-## 测试项目
+This is an educational project developed with AI assistance. See [source history](docs/SOURCE_HISTORY.md) for the original records and local version snapshots. Imported commits are not backdated. Follow [CONTRIBUTING](CONTRIBUTING.md) for future changes.
 
-1. 密钥生成测试
-2. 文本签名测试
-3. TXT文件签名测试
-4. PDF文件签名测试
-5. DOCX文件签名测试
-6. 正常验签测试
-7. 篡改检测测试
-8. 错误密钥测试
-9. 空数据测试
-10. 重复签名测试
-
----
-
-## 开发环境
-
-Python 3.10+
-
-Windows 10/11
-
-GMSSL 3.2.2
-
-ttkbootstrap 1.10.1
+本项目用于课程学习与求职作品展示，开发和本次仓库整理使用了 AI 辅助。可运行代码与验证记录不等于所有代码均由本人独立手写，也不代表生产系统经验。历史说明中的本机路径与旧验收记录仅供追溯。
