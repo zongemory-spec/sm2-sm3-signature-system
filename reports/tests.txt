@@ -1,0 +1,22 @@
+test_demo_key_store_validates_before_writes (test_crypto_v2.MessageSignatureTests.test_demo_key_store_validates_before_writes) ... ok
+test_file_hash_binds_every_byte (test_crypto_v2.MessageSignatureTests.test_file_hash_binds_every_byte) ... ok
+test_generated_private_scalar_boundaries (test_crypto_v2.MessageSignatureTests.test_generated_private_scalar_boundaries) ... ok
+test_invalid_signature_scalars_and_shapes (test_crypto_v2.MessageSignatureTests.test_invalid_signature_scalars_and_shapes) ... ok
+test_legacy_requires_explicit_method_and_v2_not_accepted_as_legacy (test_crypto_v2.MessageSignatureTests.test_legacy_requires_explicit_method_and_v2_not_accepted_as_legacy) ... ok
+test_message_api_rejects_implicit_text_encoding (test_crypto_v2.MessageSignatureTests.test_message_api_rejects_implicit_text_encoding) ... ok
+test_message_roundtrip_and_binary_tamper (test_crypto_v2.MessageSignatureTests.test_message_roundtrip_and_binary_tamper) ... ok
+test_mismatched_pair_does_not_replace_loaded_pair (test_crypto_v2.MessageSignatureTests.test_mismatched_pair_does_not_replace_loaded_pair) ... ok
+test_private_range_and_invalid_public_points (test_crypto_v2.MessageSignatureTests.test_private_range_and_invalid_public_points) ... ok
+test_public_only_verification (test_crypto_v2.MessageSignatureTests.test_public_only_verification) ... ok
+test_sm3_matches_openssl_hashlib_for_binary_and_utf8 (test_crypto_v2.MessageSignatureTests.test_sm3_matches_openssl_hashlib_for_binary_and_utf8) ... ok
+test_sm3_published_vectors (test_crypto_v2.MessageSignatureTests.test_sm3_published_vectors) ... ok
+test_text_whitespace_is_bound (test_crypto_v2.MessageSignatureTests.test_text_whitespace_is_bound) ... ok
+test_valid_wrong_key_is_rejected (test_crypto_v2.MessageSignatureTests.test_valid_wrong_key_is_rejected) ... ok
+test_bidirectional_sm2_sm3_and_identity_binding (test_interop.IndependentOpenSSLTests.test_bidirectional_sm2_sm3_and_identity_binding) ... ok
+test_der_signed_integer_boundaries (test_interop.IndependentOpenSSLTests.test_der_signed_integer_boundaries) ... ok
+test_local_roundtrip_and_tamper_rejection (test_roundtrip.SignatureRoundtrip.test_local_roundtrip_and_tamper_rejection) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.117s
+
+OK

@@ -1,650 +1,119 @@
-"""
-verify_page.py
-
-数字验签模块
-"""
-
+"""Strict V2 verification and explicitly selected historical compatibility."""
+from pathlib import Path
+import tkinter as tk
 import ttkbootstrap as ttk
-
-from utils.signature_manager import SignatureManager
+from tkinter import filedialog, messagebox
+from tkinter.scrolledtext import ScrolledText
+from crypto.sm2_manager import SM2Manager, PREFIX
+from crypto.sm3_manager import SM3Manager
 from utils.key_manager import KeyManager
 from utils.file_handler import FileHandler
 from utils.logger import SystemLogger
 
-from ttkbootstrap.constants import *
-
-from tkinter import filedialog
-from tkinter import messagebox
-from tkinter.scrolledtext import ScrolledText
-
-from crypto.sm2_manager import SM2Manager
-from crypto.sm3_manager import SM3Manager
-
 
 class VerifyPage:
-
     def __init__(self, parent):
-
-        self.parent = parent
-
-        self.sm2 = SM2Manager()
-
-        self.current_file = None
-
-        self.signature = ""
-
-        self.create_ui()
-
+        self.sm2 = SM2Manager(); self.current_file = None; self.signature = ''; self.file_mode = False
+        main = ttk.Frame(parent, padding=12); main.pack(fill='both', expand=True)
+        ttk.Label(main, text='V2 验证原文与公钥；旧版仅在显式勾选后使用历史摘要文本规则。', wraplength=1050).pack(anchor='w')
+        controls = ttk.Frame(main); controls.pack(fill='x', pady=8)
+        for label, command in [('导入公钥', self.load_public_key), ('导入签名', self.load_signature), ('选择文件', self.select_file), ('文本验签', self.verify_text), ('文件验签', self.verify_file), ('篡改测试', self.tamper_test), ('错误公钥测试', self.wrong_key_test)]:
+            ttk.Button(controls, text=label, command=command).pack(side='left', padx=3)
+        self.legacy = tk.BooleanVar(value=False)
+        ttk.Checkbutton(main, text='允许旧版无标记签名（非 V2；旧文件按提取文字验证）', variable=self.legacy).pack(anchor='w')
+        ttk.Label(main, text='公钥（可以粘贴；公钥来源需自行确认）').pack(anchor='w', pady=(8, 0))
+        self.public_text = ScrolledText(main, height=2); self.public_text.pack(fill='x')
+        ttk.Label(main, text='待验签文本（V2 保留空格与换行）').pack(anchor='w', pady=(8, 0))
+        self.text_input = ScrolledText(main, height=5); self.text_input.pack(fill='both', expand=True)
+        self.file_status = ttk.Label(main, text='未选择文件'); self.file_status.pack(anchor='w', pady=4)
+        ttk.Label(main, text='导入或粘贴签名').pack(anchor='w')
+        self.signature_text = ScrolledText(main, height=3); self.signature_text.pack(fill='x')
+        ttk.Label(main, text='待验证内容的 SM3 摘要').pack(anchor='w', pady=(8, 0))
+        self.digest_text = ScrolledText(main, height=2); self.digest_text.pack(fill='x')
+        self.log_text = ScrolledText(main, height=5); self.log_text.pack(fill='both', expand=True, pady=8)
         self.load_default_public_key()
 
+    @staticmethod
+    def put(widget, value):
+        widget.delete('1.0', 'end'); widget.insert('end', value)
+
+    def log(self, text):
+        self.log_text.insert('end', text + '\n'); self.log_text.see('end'); SystemLogger.info(text)
+
     def load_default_public_key(self):
-
-        try:
-
-            public_key = \
-                KeyManager.load_public_key()
-
-            self.public_text.insert(
-                "end",
-                public_key
-            )
-
-            self.sm2.public_key = \
-                public_key
-
-        except:
-
-            pass
-
-    def create_ui(self):
-
-        main_frame = ttk.Frame(self.parent)
-
-        main_frame.pack(
-            fill=BOTH,
-            expand=True,
-            padx=10,
-            pady=10
-        )
-
-        # ==================================
-        # 左侧功能区
-        # ==================================
-
-        left_frame = ttk.LabelFrame(
-            main_frame,
-            text="验签操作区"
-        )
-
-        left_frame.pack(
-            side=LEFT,
-            fill=BOTH,
-            expand=True,
-            padx=5
-        )
-
-        ttk.Button(
-            left_frame,
-            text="导入公钥",
-            bootstyle=PRIMARY,
-            command=self.load_public_key
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="导入签名",
-            bootstyle=INFO,
-            command=self.load_signature
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="选择文件",
-            bootstyle=SECONDARY,
-            command=self.select_file
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="文本验签",
-            bootstyle=SUCCESS,
-            command=self.verify_text
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="文件验签",
-            bootstyle=SUCCESS,
-            command=self.verify_file
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="篡改测试",
-            bootstyle=WARNING,
-            command=self.tamper_test
-        ).pack(fill=X, pady=5)
-
-        ttk.Button(
-            left_frame,
-            text="错误密钥测试",
-            bootstyle=DANGER,
-            command=self.wrong_key_test
-        ).pack(fill=X, pady=5)
-
-        ttk.Label(
-            left_frame,
-            text="待验签文本"
-        ).pack(anchor=W)
-
-        self.text_input = ScrolledText(
-            left_frame,
-            height=12
-        )
-
-        self.text_input.pack(
-            fill=BOTH,
-            expand=True
-        )
-
-        # ==================================
-        # 右侧显示区
-        # ==================================
-
-        right_frame = ttk.LabelFrame(
-            main_frame,
-            text="验签结果区"
-        )
-
-        right_frame.pack(
-            side=RIGHT,
-            fill=BOTH,
-            expand=True,
-            padx=5
-        )
-
-        ttk.Label(
-            right_frame,
-            text="公钥"
-        ).pack(anchor=W)
-
-        self.public_text = ScrolledText(
-            right_frame,
-            height=6
-        )
-
-        self.public_text.pack(
-            fill=X,
-            pady=5
-        )
-
-        ttk.Label(
-            right_frame,
-            text="导入签名"
-        ).pack(anchor=W)
-
-        self.signature_text = ScrolledText(
-            right_frame,
-            height=6
-        )
-
-        self.signature_text.pack(
-            fill=X,
-            pady=5
-        )
-
-        ttk.Label(
-            right_frame,
-            text="SM3摘要"
-        ).pack(anchor=W)
-
-        self.digest_text = ScrolledText(
-            right_frame,
-            height=4
-        )
-
-        self.digest_text.pack(
-            fill=X,
-            pady=5
-        )
-
-        ttk.Label(
-            right_frame,
-            text="测试日志"
-        ).pack(anchor=W)
-
-        self.log_text = ScrolledText(
-            right_frame,
-            height=12
-        )
-
-        self.log_text.pack(
-            fill=BOTH,
-            expand=True
-        )
-
-    # ==================================
-    # 日志函数
-    # ==================================
-
-    def log(self, msg):
-
-        self.log_text.insert(
-            "end",
-            msg + "\n"
-        )
-
-        self.log_text.see("end")
-        SystemLogger.info(msg)
-
-    # ==================================
-    # 导入公钥
-    # ==================================
+        try: self.put(self.public_text, KeyManager.load_public_key())
+        except FileNotFoundError: pass
 
     def load_public_key(self):
-
-        file_path = filedialog.askopenfilename(
-            filetypes=[
-                ("Key File", "*.key"),
-                ("Text File", "*.txt")
-            ]
-        )
-
-        if not file_path:
-            return
-
-        with open(
-            file_path,
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            public_key = f.read().strip()
-
-        self.public_text.delete(
-            "1.0",
-            "end"
-        )
-
-        self.public_text.insert(
-            "end",
-            public_key
-        )
-
-        self.sm2.public_key = public_key
-
-        self.log("导入公钥成功")
-
-    # ==================================
-    # 导入签名
-    # ==================================
+        path = filedialog.askopenfilename(title='选择公钥', filetypes=[('Public key', '*.key'), ('All', '*.*')])
+        if path:
+            try: self.put(self.public_text, Path(path).read_text(encoding='utf-8').strip())
+            except (OSError, UnicodeError) as exc: messagebox.showerror('读取失败', str(exc))
 
     def load_signature(self):
-
-        file_path = filedialog.askopenfilename(
-            filetypes=[
-                ("Signature File", "*.sig")
-            ]
-        )
-
-        if not file_path:
-            return
-
-        with open(
-            file_path,
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            self.signature = f.read().strip()
-
-        self.signature_text.delete(
-            "1.0",
-            "end"
-        )
-
-        self.signature_text.insert(
-            "end",
-            self.signature
-        )
-
-        self.log("导入签名成功")
-
-    # ==================================
-    # 选择文件
-    # ==================================
+        path = filedialog.askopenfilename(title='选择签名', filetypes=[('Signature', '*.sig'), ('All', '*.*')])
+        if path:
+            try:
+                self.signature = Path(path).read_text(encoding='utf-8').strip()
+                self.put(self.signature_text, self.signature)
+                self.log('已导入签名；版本将在验证时检查')
+            except (OSError, UnicodeError) as exc: messagebox.showerror('读取失败', str(exc))
 
     def select_file(self):
-
-        path = filedialog.askopenfilename(
-            title="选择文件",
-            filetypes=[
-                ("支持文件",
-                 "*.txt *.pdf *.docx")
-            ]
-        )
-
+        path = filedialog.askopenfilename(title='选择待验签文件', filetypes=[('All', '*.*')])
         if path:
+            self.current_file = path; self.file_mode = True; self.file_status.config(text='当前文件：' + Path(path).name)
 
-            self.current_file = path
+    def _material(self, file=False):
+        signature = self.signature_text.get('1.0', 'end').strip()
+        if not signature: raise ValueError('请粘贴或导入签名')
+        legacy = not signature.startswith(PREFIX)
+        if legacy and not self.legacy.get(): raise ValueError('旧版无标记签名需要显式勾选兼容模式')
+        if file:
+            if not self.current_file: raise ValueError('请先选择文件')
+            data = FileHandler.read_file(self.current_file).encode('utf-8') if legacy else Path(self.current_file).read_bytes()
+        else:
+            text = self.text_input.get('1.0', 'end-1c')
+            if legacy: text = text.strip()
+            if not text: raise ValueError('请输入文本')
+            data = text.encode('utf-8')
+        public = self.public_text.get('1.0', 'end').strip()
+        if not public:
+            public = KeyManager.load_public_key(); self.put(self.public_text, public)
+        engine = SM2Manager(); engine.load_keys(None, public)
+        return data, signature, legacy, engine
 
-            # 与“数字签名”界面保持一致：选择文件后，
-            # 将文件路径提示显示在左侧“待验签文本”框中，
-            # 不再只显示到右侧测试日志里。
-            self.text_input.delete(
-                "1.0",
-                "end"
-            )
+    def _check(self, data, signature, legacy, engine):
+        digest = SM3Manager.hash_bytes(data); self.put(self.digest_text, digest)
+        return engine.verify(digest, signature) if legacy else engine.verify_message(data, signature)
 
-            self.text_input.insert(
-                "end",
-                f"已选择文件：\n{path}"
-            )
-
-            self.log(
-                f"选择文件: {path}"
-            )
-
-    # ==================================
-    # 文本验签
-    # ==================================
-
-    def verify_text(self):
-
-        text = self.text_input.get(
-            "1.0",
-            "end"
-        ).strip()
-
-        signature = self.signature_text.get(
-            "1.0",
-            "end"
-        ).strip()
-
-        if not signature:
-            signature = self.signature
-
-        if not text:
-
-            messagebox.showwarning(
-                "提示",
-                "请输入文本"
-            )
-
-            self.log("文本验签失败：待验签文本为空")
-            return
-
-        if not signature:
-
-            messagebox.showwarning(
-                "提示",
-                "请先导入签名或粘贴签名"
-            )
-
-            self.log("文本验签失败：未导入签名")
-            return
-
+    def _verify(self, file=False):
         try:
+            data, signature, legacy, engine = self._material(file)
+            self.file_mode = file
+            ok = self._check(data, signature, legacy, engine)
+            self.log(('旧版兼容' if legacy else 'V2 原文字节') + ('：验签通过' if ok else '：签名不匹配（原文、公钥或签名可能变化）'))
+        except (ValueError, TypeError, OSError, UnicodeError) as exc:
+            self.log('验签输入错误：' + str(exc))
 
-            self.signature = signature
-
-            digest = SM3Manager.hash_text(text)
-
-            self.digest_text.delete(
-                "1.0",
-                "end"
-            )
-
-            self.digest_text.insert(
-                "end",
-                digest
-            )
-
-            result = self.sm2.verify(
-                digest,
-                signature
-            )
-
-            if result:
-
-                self.log(
-                    "文本验签成功"
-                )
-
-                messagebox.showinfo(
-                    "结果",
-                    "验签成功"
-                )
-
-            else:
-
-                self.log(
-                    "文本验签失败"
-                )
-
-                messagebox.showerror(
-                    "结果",
-                    "验签失败"
-                )
-
-        except Exception as e:
-
-            self.log(f"文本验签异常：{e}")
-            messagebox.showerror(
-                "错误",
-                f"文本验签异常：{e}"
-            )
-
-    # ==================================
-    # 文件验签
-    # ==================================
-
-    def verify_file(self):
-
-        if not self.current_file:
-
-            messagebox.showwarning(
-                "提示",
-                "请先选择文件"
-            )
-            self.log("文件验签失败：未选择文件")
-            return
-
-        signature = self.signature_text.get(
-            "1.0",
-            "end"
-        ).strip()
-
-        if not signature:
-            signature = self.signature
-
-        if not signature:
-
-            messagebox.showwarning(
-                "提示",
-                "请先导入签名或粘贴签名"
-            )
-            self.log("文件验签失败：未导入签名")
-            return
-
-        try:
-
-            self.signature = signature
-
-            content = FileHandler.read_file(
-                self.current_file
-            )
-
-            digest = SM3Manager.hash_text(
-                content
-            )
-
-            self.digest_text.delete(
-                "1.0",
-                "end"
-            )
-
-            self.digest_text.insert(
-                "end",
-                digest
-            )
-
-            result = self.sm2.verify(
-                digest,
-                signature
-            )
-
-            if result:
-
-                self.log(
-                    "文件验签成功"
-                )
-
-                messagebox.showinfo(
-                    "结果",
-                    "文件未被篡改"
-                )
-
-            else:
-
-                self.log(
-                    "文件验签失败"
-                )
-
-                messagebox.showerror(
-                    "结果",
-                    "文件可能被篡改"
-                )
-
-        except Exception as e:
-
-            self.log(f"文件验签异常：{e}")
-            messagebox.showerror(
-                "错误",
-                f"文件验签异常：{e}"
-            )
-
-    # ==================================
-    # 篡改测试
-    # ==================================
+    def verify_text(self): self._verify(False)
+    def verify_file(self): self._verify(True)
 
     def tamper_test(self):
-
-        text = self.text_input.get(
-            "1.0",
-            "end"
-        ).strip()
-
-        if not text:
-
-            return
-
-        tampered = text + "_tampered"
-
-        digest = SM3Manager.hash_text(
-            tampered
-        )
-
-        result = self.sm2.verify(
-            digest,
-            self.signature
-        )
-
-        if not result:
-
-            self.log(
-                "篡改测试成功"
-            )
-
-            messagebox.showinfo(
-                "测试结果",
-                "检测到篡改"
-            )
-
-        else:
-
-            self.log(
-                "篡改测试异常"
-            )
-
-    # ==================================
-    # 错误密钥测试
-    # ==================================
+        try:
+            data, signature, legacy, engine = self._material(self.file_mode)
+            if not self._check(data, signature, legacy, engine):
+                raise ValueError('请先提供可以通过的原文和签名，再做篡改测试')
+            ok = self._check(data + b'_tampered', signature, legacy, engine)
+            self.log('篡改临时副本：' + ('异常通过' if ok else '被拒绝（符合预期）；未修改原文件'))
+        except (ValueError, TypeError, OSError, UnicodeError) as exc: self.log('篡改测试输入错误：' + str(exc))
 
     def wrong_key_test(self):
-
-        old_key = self.sm2.public_key
-
-        fake_key = "04" + "A"*128
-
-        self.sm2.public_key = fake_key
-
         try:
-
-            text = self.text_input.get(
-                "1.0",
-                "end"
-            ).strip()
-
-            digest = SM3Manager.hash_text(
-                text
-            )
-
-            result = self.sm2.verify(
-                digest,
-                self.signature
-            )
-
-            if not result:
-
-                self.log(
-                    "错误密钥测试成功"
-                )
-
-                messagebox.showinfo(
-                    "测试结果",
-                    "错误密钥验签失败（符合预期）"
-                )
-
-            else:
-
-                self.log(
-                    "错误密钥测试异常"
-                )
-
-        except Exception:
-
-            self.log(
-                "错误密钥测试成功"
-            )
-
-        finally:
-
-            self.sm2.public_key = old_key
-
-    def load_default_signature(self):
-
-        sigs = SignatureManager.list_signatures()
-
-        if not sigs:
-            return
-
-        path = (
-            "signatures/"
-            + sigs[0]
-        )
-
-        self.signature = (
-            SignatureManager
-            .load_signature(path)
-        )
-
-        self.signature_text.delete(
-            "1.0",
-            "end"
-        )
-
-        self.signature_text.insert(
-            "end",
-            self.signature
-        )
+            data, signature, legacy, original = self._material(self.file_mode)
+            if not self._check(data, signature, legacy, original):
+                raise ValueError('请先提供可以通过的原文和签名')
+            wrong = SM2Manager(); wrong.generate_keypair()
+            ok = self._check(data, signature, legacy, wrong)
+            self.log('另一个有效公钥：' + ('异常通过' if ok else '被拒绝（符合预期）'))
+        except (ValueError, TypeError, OSError, UnicodeError) as exc: self.log('错误公钥测试输入错误：' + str(exc))

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-30T18:39:49.567668+00:00",
+  "gmssl": "3.2.2",
+  "profile": "SM2 + SM3(ZA || original bytes)",
+  "identity": "1234567812345678",
+  "signature_format": "SM2SM3-V2:r||s hex",
+  "passed": true,
+  "openssl_required": true,
+  "cases": {
+    "sm3_abc_known_vector": true,
+    "original_message_verifies": true,
+    "changed_message_rejected": true,
+    "changed_whitespace_rejected": true,
+    "valid_wrong_public_key_rejected": true,
+    "legacy_explicit_verification": true,
+    "no_automatic_downgrade": true
+  },
+  "independent_openssl": {
+    "status": "tested",
+    "openssl": "OpenSSL 3.0.16 11 Feb 2025",
+    "gmssl_signature_verified_by_openssl": true,
+    "openssl_signature_verified_by_gmssl": true,
+    "changed_message_rejected": true,
+    "different_identity_rejected": true,
+    "passed": true
+  },
+  "scope": "Educational single-profile tests, not certification, TLS/DNSSEC compatibility or a key-management audit."
+}

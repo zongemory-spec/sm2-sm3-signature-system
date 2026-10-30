@@ -1,44 +1,19 @@
-"""
-sm3_manager.py
-
-SM3摘要模块
-"""
-
-from gmssl import sm3, func
+"""SM3 over UTF-8 text or exact file bytes."""
+from pathlib import Path
+from gmssl import sm3
 
 
 class SM3Manager:
+    @staticmethod
+    def hash_bytes(data):
+        if not isinstance(data, bytes):
+            raise TypeError("摘要输入必须为 bytes")
+        return sm3.sm3_hash(list(data))
 
     @staticmethod
     def hash_text(text):
-        """
-        文本摘要
-        """
-
-        data = text.encode("utf-8")
-
-        digest = sm3.sm3_hash(
-            func.bytes_to_list(data)
-        )
-
-        return digest
+        return SM3Manager.hash_bytes(text.encode("utf-8"))
 
     @staticmethod
     def hash_file(file_path):
-        """
-        文件摘要
-
-        支持：
-        txt
-        pdf
-        docx
-        """
-
-        with open(file_path, "rb") as f:
-            data = f.read()
-
-        digest = sm3.sm3_hash(
-            func.bytes_to_list(data)
-        )
-
-        return digest
+        return SM3Manager.hash_bytes(Path(file_path).read_bytes())

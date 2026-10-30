@@ -15,7 +15,7 @@ class Config:
 
     APP_NAME = "SM2/SM3数字签名与验签系统"
 
-    VERSION = "1.0"
+    VERSION = "2.0"
 
     AUTHOR = "Zhifeng Zhuang"
 
